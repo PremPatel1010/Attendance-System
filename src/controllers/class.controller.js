@@ -1,4 +1,4 @@
-import { AddStudentService, CreateClassService } from "../services/class.service.js";
+import { AddStudentService, CreateClassService, GetClassService } from "../services/class.service.js";
 
 export const CreateClass = async (req,res) => {
   try {
@@ -32,7 +32,25 @@ export const AddStudent = async (req, res) => {
     const AddStudent = await AddStudentService(classId, studentId);
 
     
-    res.status(201).json({message : "Sucess"})
+    res.status(201).json({AddStudent})
+    
+  } catch (error) {
+    res.status(400).send(error.message);
+    console.error(error);
+    
+  }
+}
+
+export const GetClass = async (req, res) => {
+  try {
+    const classId = req.params.id;
+    if(!classId){
+      throw new Error("Class Id is required");
+    }
+
+    const GetClass = await GetClassService(classId);
+    
+    res.status(201).json({GetClass});
     
   } catch (error) {
     res.status(400).send(error.message);

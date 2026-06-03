@@ -39,8 +39,20 @@ export const AddStudentService = async(classId, studentId) => {
     }
   )
 
-  console.log(AddStudent);
   return AddStudent;
   
   
+}
+
+export const GetClassService = async(classId) => {
+  console.log(classId)
+  const GetClass = await Class.findById(classId).populate("studentIds", "-password")
+
+  if(!GetClass){
+    throw new Error("No such class is present");
+  }
+
+  console.log(GetClass)
+
+  return GetClass;
 }
