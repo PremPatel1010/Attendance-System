@@ -56,3 +56,4 @@ export const GetClassService = async(classId) => {
 
   return GetClass;
 }
+
