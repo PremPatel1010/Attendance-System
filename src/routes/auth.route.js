@@ -13,10 +13,14 @@ router.post('/signup', signup);
 router.post('/login', signin);
 
 router.get("/me", authenticateToken, (req, res) => {
+  const user = req.user.toObject();
+
   return res.status(200).json({
     success: true,
-    user: req.user,
-    teacherId: req.teacherId ?? null,
+    data: {
+      ...user,
+      teacherId: req.teacherId ?? null,
+    },
   });
 });
 

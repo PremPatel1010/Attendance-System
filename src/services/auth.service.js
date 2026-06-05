@@ -2,8 +2,10 @@ import User from "../models/User.model.js";
 
 export const CreateUser = async (name,email, password, role) => {
   console.log(email,password,name, role);
-  if(!email || !password || !name || !role) {
-    throw new Error('Email and password are required');
+  const existingUser = await User.findOne({ email });
+
+  if (existingUser) {
+    throw new Error('Email already exists');
   }
 
   const newUser = new User({

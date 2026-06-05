@@ -4,6 +4,7 @@ import http from "http";
 import { WebSocketServer } from "ws";
 import { handleMessage } from "./src/websocket/handler.js";
 import User from "./src/models/User.model.js";
+import activeSession from "./src/websocket/session.js";
 
 const PORT = 3000;
 
@@ -14,6 +15,34 @@ const wss = new WebSocketServer({ server });
 wss.on("connection", async (ws, req) => {
   const url = new URL(req.url, "http://localhost");
   const token = url.searchParams.get("token");
+  const pendingMessages = [];
+  let isReady = false;
+
+  ws.on("message", (raw) => {
+    if (!isReady) {
+      pendingMessages.push(raw);
+      return;
+    }
+
+    try {
+      const message = JSON.parse(raw.toString());
+      void handleMessage(ws, wss, message).catch(() => {
+        ws.send(
+          JSON.stringify({
+            event: "ERROR",
+            data: { message: "Something went wrong while handling message" },
+          }),
+        );
+      });
+    } catch (error) {
+      ws.send(
+        JSON.stringify({
+          event: "ERROR",
+          data: { message: "Invalid message format" },
+        }),
+      );
+    }
+  });
   
   console.log(token);
 
@@ -43,10 +72,19 @@ wss.on("connection", async (ws, req) => {
     return;
   }
 
-  ws.on("message", (raw) => {
+  isReady = true;
+  while (pendingMessages.length > 0) {
+    const raw = pendingMessages.shift();
     try {
-      const message = JSON.parse(raw);
-      handleMessage(ws, wss, message);
+      const message = JSON.parse(raw.toString());
+      void handleMessage(ws, wss, message).catch(() => {
+        ws.send(
+          JSON.stringify({
+            event: "ERROR",
+            data: { message: "Something went wrong while handling message" },
+          }),
+        );
+      });
     } catch (error) {
       ws.send(
         JSON.stringify({
@@ -55,6 +93,12 @@ wss.on("connection", async (ws, req) => {
         }),
       );
     }
+  }
+
+  ws.on("close", () => {
+    activeSession.classId = null;
+    activeSession.startedAt = null;
+    activeSession.attendance = {};
   });
 });
 

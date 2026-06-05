@@ -13,8 +13,22 @@ export const CreateClassService =  async (className, teacherId) => {
 
   const newClass = new Class({className, teacherId});
 
-  await newClass.save();
-  return newClass;
+  try {
+    await newClass.save();
+    return newClass;
+  } catch (error) {
+    const isClassNameDuplicate =
+      error?.code === 11000 &&
+      (error?.keyPattern?.className || error?.message?.includes("className"));
+
+    if (!isClassNameDuplicate) {
+      throw error;
+    }
+
+    await Class.collection.dropIndex("className_1").catch(() => {});
+    await newClass.save();
+    return newClass;
+  }
 
 }
 
@@ -32,21 +46,17 @@ export const AddStudentService = async(classId, studentId) => {
     throw new Error("Such Student is not present")
   }
 
-  const AddStudent = await Class.updateOne(
-    {_id: classId},
-    {
-      $push: {studentIds: studentId}
-    }
-  )
+  ClassToUpdate.studentIds.addToSet(studentId);
+  await ClassToUpdate.save();
 
-  return AddStudent;
+  return ClassToUpdate;
   
   
 }
 
 export const GetClassService = async(classId) => {
   console.log(classId)
-  const GetClass = await Class.findById(classId).populate("studentIds", "-password")
+  const GetClass = await Class.findById(classId)
 
   if(!GetClass){
     throw new Error("No such class is present");

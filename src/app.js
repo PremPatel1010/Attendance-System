@@ -2,6 +2,8 @@ import express from 'express'
 import authRoutes from "./routes/auth.route.js"
 import classRoutes from "./routes/class.route.js"
 import studentRoutes from "./routes/student.route.js"
+import { StartAttendance } from './controllers/class.controller.js';
+import { requireTeacher } from './middleware/auth.js';
 import morgan from 'morgan';
 import dotenv from 'dotenv'
 dotenv.config();
@@ -14,9 +16,10 @@ app.use(morgan('dev'));
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-app.use("/api/auth", authRoutes);
-app.use("/api/class", classRoutes);
-app.use("/api/students", studentRoutes);
+app.use("/auth", authRoutes);
+app.use("/class", classRoutes);
+app.use("/students", studentRoutes);
+app.post("/attendance/start", requireTeacher, StartAttendance);
 
 app.use((err, req, res, next) => {
 	if (err instanceof SyntaxError && err.status === 400 && "body" in err) {

@@ -4,11 +4,15 @@ import User from "../models/User.model.js";
 const getBearerToken = (req) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader) {
     return null;
   }
 
-  return authHeader.split(" ")[1];
+  if (authHeader.startsWith("Bearer ")) {
+    return authHeader.split(" ")[1];
+  }
+
+  return authHeader;
 };
 
 const loadUserFromRequest = async (req) => {
@@ -38,15 +42,10 @@ export const authenticateToken = async (req, res, next) => {
 
     return next();
   } catch (error) {
-    if (error.message === "TOKEN_MISSING") {
-      return res.status(401).json({ message: "Unauthorized: token missing" });
-    }
-
-    if (error.message === "USER_NOT_FOUND") {
-      return res.status(401).json({ message: "Unauthorized: user not found" });
-    }
-
-    return res.status(401).json({ message: "Unauthorized: invalid token" });
+    return res.status(401).json({
+      success: false,
+      error: "Unauthorized, token missing or invalid",
+    });
   }
 };
 
@@ -55,7 +54,10 @@ export const requireTeacher = async (req, res, next) => {
     const user = await loadUserFromRequest(req);
 
     if (user.role !== "teacher") {
-      return res.status(403).json({ message: "Forbidden: teacher access only" });
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden, teacher access required",
+      });
     }
 
     req.user = user;
@@ -64,14 +66,9 @@ export const requireTeacher = async (req, res, next) => {
 
     return next();
   } catch (error) {
-    if (error.message === "TOKEN_MISSING") {
-      return res.status(401).json({ message: "Unauthorized: token missing" });
-    }
-
-    if (error.message === "USER_NOT_FOUND") {
-      return res.status(401).json({ message: "Unauthorized: user not found" });
-    }
-
-    return res.status(401).json({ message: "Unauthorized: invalid token" });
+    return res.status(401).json({
+      success: false,
+      error: "Unauthorized, token missing or invalid",
+    });
   }
 };
