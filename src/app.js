@@ -29,4 +29,7 @@ app.use((err, req, res, next) => {
 	next(err);
 });
 
+app.use('/', (req,res) => {
+	res.send("Welcome to Attendance System!!")
+})
 export default app;
